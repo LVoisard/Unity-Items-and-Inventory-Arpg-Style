@@ -32,9 +32,32 @@ public class InventoryController : MonoBehaviour
             }
         };
 
+        var item3 = new TempItem
+        {
+            itemSize = new Vector2Int
+            {
+                x = 1,
+                y = 1
+            }
+        };
+
+        var item4 = new TempItem
+        {
+            itemSize = new Vector2Int
+            {
+                x = 2,
+                y = 2
+            }
+        };
+
         var slot = this.PlayerInventory.GetFirstAvailableSlotForItem(item);
         this.PlayerInventory.AddItem(slot.slotPosition, item);
-        this.PlayerInventory.AddItem(new Vector2Int(3,0), item2);
+        this.PlayerInventory.AddItem(new Vector2Int(2,0), item2);
+        this.PlayerInventory.AddItem(new Vector2Int(3,0), item3);
+        this.PlayerInventory.AddItem(new Vector2Int(4,0), item4);
+
+
+        
 
     }
 }

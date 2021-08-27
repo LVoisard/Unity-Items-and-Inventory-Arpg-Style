@@ -43,7 +43,6 @@ public class Inventory : MonoBehaviour
     {
         var slot = inventorySlots[slotPosition.y, slotPosition.x];
         slot.Item = item;
-        print(slot.name);
 
         for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
@@ -79,8 +78,8 @@ public class Inventory : MonoBehaviour
         {
             for (int x = slot.slotPosition.x; x < slot.slotPosition.x + item.itemSize.x; x++)
             {
-                print("Y: " + y);
-                print("X: " + x);
+                if (x < 0 || y < 0 || x >= this.colCount || y >= this.rowCount)
+                    return;
                 inventorySlots[y, x].GetComponent<Image>().color = color;
             }
         }
@@ -92,6 +91,8 @@ public class Inventory : MonoBehaviour
         {
             for (int x = slot.slotPosition.x; x < slot.slotPosition.x + item.itemSize.x; x++)
             {
+                if (x < 0 || y < 0 || x >= this.colCount || y >= this.rowCount)
+                    return;
                 inventorySlots[y, x].GetComponent<Image>().color = Colors.Clear;
             }
         }
@@ -99,10 +100,12 @@ public class Inventory : MonoBehaviour
 
     private void HighlightSlots(InventorySlot slot, TempItem item, Color color)
     {
-        for (int y = slot.slotPosition.y - item.itemSize.y/2; y < slot.slotPosition.y + item.itemSize.y - item.itemSize.y/2; y++)
+        for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
             for (int x = slot.slotPosition.x; x < slot.slotPosition.x + item.itemSize.x; x++)
             {
+                if (x < 0 || y < 0 || x >= this.colCount || y >= this.rowCount)
+                    return;
                 inventorySlots[y, x].GetComponent<Image>().color = color;
             }
         }
@@ -110,10 +113,12 @@ public class Inventory : MonoBehaviour
 
     private void UnHighlightSlots(InventorySlot slot, TempItem item)
     {
-        for (int y = slot.slotPosition.y - item.itemSize.y/2; y < slot.slotPosition.y + item.itemSize.y - item.itemSize.y/2; y++)
+        for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
             for (int x = slot.slotPosition.x; x < slot.slotPosition.x + item.itemSize.x; x++)
             {
+                if (x < 0 || y < 0 || x >= this.colCount || y >= this.rowCount)
+                    return;
                 inventorySlots[y, x].GetComponent<Image>().color = Colors.Clear;
             }
         }
@@ -121,7 +126,7 @@ public class Inventory : MonoBehaviour
 
     private bool slotUnderItemAreOccupied(InventorySlot slot, TempItem item)
     {
-        for (int y = slot.slotPosition.y - item.itemSize.y / 2; y < slot.slotPosition.y + item.itemSize.y - item.itemSize.y / 2; y++)
+        for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
             for (int x = slot.slotPosition.x; x < slot.slotPosition.x + item.itemSize.x; x++)
             {
@@ -145,20 +150,29 @@ public class Inventory : MonoBehaviour
                 {
                     //take the slot's parent
                     var parentSlot = slot.parentSlot ?? slot;
-                    this.HighlightItem(parentSlot, parentSlot.Item, Colors.Green);                    
+                    this.HighlightItem(parentSlot, parentSlot.Item, Colors.Green);
                 }
             }
         }
         else
         {
-            var parentSlots = this.ItemCountUnderItem(slot, this.selectedItem);
-            if (parentSlots.Count == 0)
+            var offsetSlot = this.inventorySlots[slot.slotPosition.y - this.selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            var parentSlots = this.ItemCountUnderItem(offsetSlot, this.selectedItem);
+            if (parentSlots == null)
             {
-                this.HighlightSlots(slot, this.selectedItem, Colors.Blue);
+                Debug.LogWarning("Error: Index out of range");
+            }
+            else if (parentSlots.Count == 0)
+            {
+                this.HighlightSlots(offsetSlot, this.selectedItem, Colors.Blue);
             }
             else if (parentSlots.Count == 1)
             {
                 this.HighlightSlots(parentSlots[0], parentSlots[0].Item, Colors.Green);
+            }
+            else
+            {
+                this.HighlightSlots(offsetSlot, this.selectedItem, Colors.Red);
             }
         }
     }
@@ -183,20 +197,35 @@ public class Inventory : MonoBehaviour
         }
         else
         {
-            var parentSlots = this.ItemCountUnderItem(slot, this.selectedItem);
-            if (parentSlots.Count == 0)
+            var offsetSlot = this.inventorySlots[slot.slotPosition.y - this.selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            var parentSlots = this.ItemCountUnderItem(offsetSlot, this.selectedItem);
+            if (parentSlots == null)
             {
-                this.UnHighlightSlots(slot, this.selectedItem);
+                Debug.LogWarning("Error: Index out of range");
+            }
+            else if (parentSlots.Count == 0)
+            {
+                this.UnHighlightSlots(offsetSlot, this.selectedItem);
             }
             else if (parentSlots.Count == 1)
             {
                 this.HighlightItem(parentSlots[0], parentSlots[0].Item, Colors.Blue);
+            }
+            else
+            {
+                this.UnHighlightSlots(offsetSlot, this.selectedItem);
+                foreach (var s in parentSlots)
+                {
+                    this.HighlightSlots(s, s.Item, Colors.Blue);
+                }
             }
         }
     }
 
     private void InventorySlot_SlotClicked(InventorySlot slot)
     {
+        print(slot.slotPosition.x + "," + slot.slotPosition.y);
+
         if (!isItemSelected)
         {
             //Pick Up
@@ -204,7 +233,7 @@ public class Inventory : MonoBehaviour
             {
                 this.selectedItem = slot.Item;
                 this.isItemSelected = true;
-                this.SetSlotRaycastTartget(slot.Item.itemSize.x % 2 == 0);
+                this.SetSlotRaycastTartget(slot.Item.itemSize.x % 2 == 0, this.selectedItem.itemSize.y % 2 == 0);
 
                 //setup event for when an item is picked up (displaying physical item only i think)
                 this.UnsetOccupiedSlots(slot.parentSlot);
@@ -212,27 +241,26 @@ public class Inventory : MonoBehaviour
         }
         else
         {
-            Vector2Int offset = new Vector2Int(0, selectedItem.itemSize.y / 2);
-            var selectedItemStartSlot = this.inventorySlots[slot.slotPosition.y - offset.y, slot.slotPosition.x - offset.x];
-            var parentSlots = this.ItemCountUnderItem(selectedItemStartSlot, this.selectedItem);
+            var offsetSlot = this.inventorySlots[slot.slotPosition.y - this.selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            var parentSlots = this.ItemCountUnderItem(offsetSlot, this.selectedItem);
 
             //Drop
             if (parentSlots.Count == 0)
             {
-                this.DropItem(selectedItemStartSlot, this.selectedItem);
+                this.DropItem(offsetSlot, this.selectedItem);
                 this.selectedItem = null;
                 this.isItemSelected = false;
-                this.SetSlotRaycastTartget(false);
+                this.SetSlotRaycastTartget(false,false);
             }
             //Swap
             else if (parentSlots.Count == 1)
             {
                 var tempItem = parentSlots[0].Item;
                 this.UnsetOccupiedSlots(parentSlots[0]);
-                this.DropItem(selectedItemStartSlot, this.selectedItem);
+                this.DropItem(offsetSlot, this.selectedItem);
                 this.selectedItem = tempItem;
                 this.isItemSelected = true;
-                this.SetSlotRaycastTartget(this.selectedItem.itemSize.x % 2 == 0);
+                this.SetSlotRaycastTartget(this.selectedItem.itemSize.x % 2 == 0, this.selectedItem.itemSize.y % 2 == 0);
             }
             //can't do anything
             else
@@ -249,6 +277,8 @@ public class Inventory : MonoBehaviour
         {
             for (int x = slot.slotPosition.x; x < slot.slotPosition.x + item.itemSize.x; x++)
             {
+                if (x < 0 || y < 0 || x >= this.colCount || y >= this.rowCount)
+                    return null;
                 if (inventorySlots[y, x].isOccupied && !parentSlots.Contains(inventorySlots[y, x].parentSlot))
                 {
                     parentSlots.Add(inventorySlots[y, x].parentSlot);
@@ -285,19 +315,31 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    private void SetSlotRaycastTartget(bool isItemSizeXEven)
+    private void SetSlotRaycastTartget(bool isItemSizeXEven, bool isItemSizeYEven)
     {
         foreach (var slot in this.inventorySlots)
         {
             if (isItemSizeXEven)
             {
-                slot.GetComponent<Image>().raycastTarget = false;
-                slot.evenItemSlotTarget.GetComponent<Image>().raycastTarget = true;
+                if(isItemSizeYEven)
+                {
+                    slot.GetComponent<Image>().raycastPadding = new Vector4(24, 24, -24, -24);
+                }
+                else
+                {
+                    slot.GetComponent<Image>().raycastPadding = new Vector4(24, 0, -24, 0);
+                }
             }
             else
             {
-                slot.GetComponent<Image>().raycastTarget = true;
-                slot.evenItemSlotTarget.GetComponent<Image>().raycastTarget = false;
+                if(isItemSizeYEven)
+                {
+                    slot.GetComponent<Image>().raycastPadding = new Vector4(0, 24, 0, -24);
+                }
+                else
+                {
+                    slot.GetComponent<Image>().raycastPadding = new Vector4(0, 0, 0, 0);
+                }            
             }
         }
     }

@@ -20,6 +20,7 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        print(this.name);
         InventoryEvents.current.PointerEnterSlot(this);
     }
 
@@ -30,11 +31,11 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        print(this.name);
         if(eventData.button == PointerEventData.InputButton.Left)
         {
             InventoryEvents.current.PointerClickSlot(this);
-        }
-        
+        }        
     }
 
     public void SetName(string name)
