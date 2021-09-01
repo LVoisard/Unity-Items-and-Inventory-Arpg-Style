@@ -6,26 +6,79 @@ using UnityEngine;
 public class InventoryEvents : MonoBehaviour
 {
     public static InventoryEvents current;
-    private void Start()
+
+    private void Awake()
     {
         current = this;
     }
     
-    public event Action<InventorySlot> onPointerEnterSlot;
-    public void PointerEnterSlot(InventorySlot slot)
+    public event Action<InventorySlot> onPointerEnterInventorySlot;
+    public event Action<EquipmentSlot> onPointerEnterEquipmentSlot;
+
+    public void PointerEnterSlot(object slot)
     {
-        this.onPointerEnterSlot?.Invoke(slot);
+        if(slot.GetType() == typeof(InventorySlot))
+        {
+            this.onPointerEnterInventorySlot?.Invoke((InventorySlot)slot);
+        }
+        else if(slot.GetType() == typeof(EquipmentSlot))
+        {
+            this.onPointerEnterEquipmentSlot?.Invoke((EquipmentSlot)slot);
+        }
     }
 
-    public event Action<InventorySlot> onPointerExitSlot;
-    public void PointerExitSlot(InventorySlot slot)
+    public event Action<InventorySlot> onPointerExitInventorySlot;
+    public event Action<EquipmentSlot> onPointerExitEquipmentSlot;
+
+    public void PointerExitSlot(object slot)
     {
-        this.onPointerExitSlot?.Invoke(slot);
+        if(slot.GetType() == typeof(InventorySlot))
+        {
+            this.onPointerExitInventorySlot?.Invoke((InventorySlot)slot);
+        }
+        else if(slot.GetType() == typeof(EquipmentSlot))
+        {
+            this.onPointerExitEquipmentSlot?.Invoke((EquipmentSlot)slot);
+        }
     }
 
-    public event Action<InventorySlot> onPointerClickSlot;
-    public void PointerClickSlot(InventorySlot slot)
+    public event Action<InventorySlot> onPointerClickInventorySlot;
+    public event Action<EquipmentSlot> onPointerClickEquipmentSlot;
+
+    public void PointerClickSlot(object slot)
     {
-        this.onPointerClickSlot?.Invoke(slot);
+        if(slot.GetType() == typeof(InventorySlot))
+        {
+            this.onPointerClickInventorySlot?.Invoke((InventorySlot)slot);
+        }
+        else if(slot.GetType() == typeof(EquipmentSlot))
+        {
+            this.onPointerClickEquipmentSlot?.Invoke((EquipmentSlot)slot);
+        }
     }
+
+    public event Action<BaseItem> onItemSelected;  
+    public void SelectItem(BaseItem item)
+    {
+        this.onItemSelected?.Invoke(item);
+    }  
+
+    public event Action<BaseItem, InventorySlot> onItemDropped;  
+    public void DropItem(BaseItem item, InventorySlot slot)
+    {
+        this.onItemDropped?.Invoke(item,slot);
+    }
+
+    public event Action<EquipmentSlot, BaseItem> onItemEquipped;
+    public void EquipItem(EquipmentSlot slot, BaseItem item)
+    {
+        this.onItemEquipped?.Invoke(slot,item);
+    }
+
+    public event Action<EquipmentSlot, BaseItem> onItemUnEquipped;
+    public void UnEquipItem(EquipmentSlot slot, BaseItem item)
+    {
+        this.onItemUnEquipped?.Invoke(slot,item);
+    }
+
 }
