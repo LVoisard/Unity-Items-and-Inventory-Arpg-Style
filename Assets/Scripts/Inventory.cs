@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 
 public class Inventory : MonoBehaviour
 {
@@ -11,13 +12,17 @@ public class Inventory : MonoBehaviour
     [SerializeField] private int rowCount;
     [SerializeField] private int colCount;
 
-    public bool isItemSelected = false;
-    public BaseItem selectedItem;
+    public static bool isItemSelected = false;
+    public static BaseItem selectedItem;
+    public static Inventory selectedFrom;
 
-    [SerializeField]
+    public bool debugIsItemSelected;
+
     public InventorySlot[,] inventorySlots;
 
-    void Awake()
+    public IDictionary<BaseItem, Vector2Int> Items = new Dictionary<BaseItem, Vector2Int>();
+
+    protected void Awake()
     {
         this.inventorySlots = new InventorySlot[rowCount, colCount];
 
@@ -33,20 +38,20 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    private void Start()
+    protected void Start()
     {
         //Inventory slots events
         InventoryEvents.current.onPointerEnterInventorySlot += this.InventorySlot_SlotEntered;
         InventoryEvents.current.onPointerExitInventorySlot += this.InventorySlot_SlotExited;
         InventoryEvents.current.onPointerClickInventorySlot += this.InventorySlot_SlotClicked;
-
-        //Equipment slots events
-        InventoryEvents.current.onPointerEnterEquipmentSlot += this.EquipmentSlot_SlotEntered;
-        InventoryEvents.current.onPointerExitEquipmentSlot += this.EquipmentSlot_SlotExited;
-        InventoryEvents.current.onPointerClickEquipmentSlot += this.EquipmentSlot_SlotClicked;
     }
 
-    public void AddItem(Vector2Int slotPosition, TempItem item)
+    protected void Update()
+    {
+        this.debugIsItemSelected = isItemSelected;
+    }
+
+    public void AddItem(Vector2Int slotPosition, BaseItem item)
     {
         var slot = inventorySlots[slotPosition.y, slotPosition.x];
         slot.Item = item;
@@ -64,8 +69,21 @@ public class Inventory : MonoBehaviour
         }
 
         GameObject inventoryItem = Instantiate(this.inventoryItemPrefab, this.transform);
-        inventoryItem.transform.position = new Vector3((slotPosition.x - 1) * 48 + 6.5f, (this.rowCount - slotPosition.y) * 48 + 5f, 0);
-        inventoryItem.GetComponent<InventoryItem>().SetInventoryItem(item);
+        //inventoryItem.transform.position = new Vector3(((slotPosition.x + 1) * 48) + 5 , (this.rowCount - slotPosition.y) * 48 - 5, 0);
+        //inventoryItem.transform.localPosition = new Vector3(slot.transform.localPosition.x - 24, slot.transform.localPosition.y + 24, 0);
+        inventoryItem.GetComponent<InventoryItem>().SetInventoryItem(item, slot);
+
+        this.PlaceItem(item, slot.slotPosition);
+    }
+
+    protected void PlaceItem(BaseItem item, Vector2Int slotPosition)
+    {
+        this.Items.Add(item, slotPosition);
+    }
+
+    protected void RemoveItem(BaseItem item)
+    {
+        this.Items.Remove(item);
     }
 
     public InventorySlot GetFirstAvailableSlotForItem(BaseItem item)
@@ -83,7 +101,7 @@ public class Inventory : MonoBehaviour
         return null;
     }
 
-    private void HighlightItem(InventorySlot slot, BaseItem item, Color color)
+    protected void HighlightItem(InventorySlot slot, BaseItem item, Color color)
     {
         for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
@@ -96,7 +114,7 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    private void UnHightlightItem(InventorySlot slot, BaseItem item)
+    protected void UnHightlightItem(InventorySlot slot, BaseItem item)
     {
         for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
@@ -109,7 +127,7 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    private void HighlightSlots(InventorySlot slot, BaseItem item, Color color)
+    protected void HighlightSlots(InventorySlot slot, BaseItem item, Color color)
     {
         for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
@@ -122,7 +140,7 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    private void UnHighlightSlots(InventorySlot slot, BaseItem item)
+    protected void UnHighlightSlots(InventorySlot slot, BaseItem item)
     {
         for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
@@ -135,7 +153,7 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    private bool slotUnderItemAreOccupied(InventorySlot slot, BaseItem item)
+    protected bool slotUnderItemAreOccupied(InventorySlot slot, BaseItem item)
     {
         for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
@@ -150,8 +168,15 @@ public class Inventory : MonoBehaviour
         return false;
     }
 
-    private void InventorySlot_SlotEntered(InventorySlot slot)
+    protected void InventorySlot_SlotEntered(InventorySlot slot)
     {
+        if (colCount <= slot.slotPosition.x 
+            || rowCount <= slot.slotPosition.y
+            || (InventorySlot)inventorySlots.GetValue(slot.slotPosition.y, slot.slotPosition.x) != slot)
+        {
+            return;
+        }
+
         if (!isItemSelected)
         {
             if (slot.isOccupied)
@@ -167,15 +192,15 @@ public class Inventory : MonoBehaviour
         }
         else
         {
-            var offsetSlot = this.inventorySlots[slot.slotPosition.y - this.selectedItem.itemSize.y / 2, slot.slotPosition.x];
-            var parentSlots = this.ItemCountUnderItem(offsetSlot, this.selectedItem);
+            var offsetSlot = this.inventorySlots[slot.slotPosition.y - selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            var parentSlots = this.ItemCountUnderItem(offsetSlot, selectedItem);
             if (parentSlots == null)
             {
                 Debug.LogWarning("Error: Index out of range");
             }
             else if (parentSlots.Count == 0)
             {
-                this.HighlightSlots(offsetSlot, this.selectedItem, Colors.Blue);
+                this.HighlightSlots(offsetSlot, selectedItem, Colors.Blue);
             }
             else if (parentSlots.Count == 1)
             {
@@ -183,13 +208,20 @@ public class Inventory : MonoBehaviour
             }
             else
             {
-                this.HighlightSlots(offsetSlot, this.selectedItem, Colors.Red);
+                this.HighlightSlots(offsetSlot, selectedItem, Colors.Red);
             }
         }
     }
 
-    private void InventorySlot_SlotExited(InventorySlot slot)
+    protected void InventorySlot_SlotExited(InventorySlot slot)
     {
+        if (colCount <= slot.slotPosition.x 
+            || rowCount <= slot.slotPosition.y
+            || (InventorySlot)inventorySlots.GetValue(slot.slotPosition.y, slot.slotPosition.x) != slot)
+        {
+            return;
+        }
+
         if (!isItemSelected)
         {
             if (slot.isOccupied)
@@ -208,15 +240,15 @@ public class Inventory : MonoBehaviour
         }
         else
         {
-            var offsetSlot = this.inventorySlots[slot.slotPosition.y - this.selectedItem.itemSize.y / 2, slot.slotPosition.x];
-            var parentSlots = this.ItemCountUnderItem(offsetSlot, this.selectedItem);
+            var offsetSlot = this.inventorySlots[slot.slotPosition.y - selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            var parentSlots = this.ItemCountUnderItem(offsetSlot, selectedItem);
             if (parentSlots == null)
             {
                 Debug.LogWarning("Error: Index out of range");
             }
             else if (parentSlots.Count == 0)
             {
-                this.UnHighlightSlots(offsetSlot, this.selectedItem);
+                this.UnHighlightSlots(offsetSlot, selectedItem);
             }
             else if (parentSlots.Count == 1)
             {
@@ -224,7 +256,7 @@ public class Inventory : MonoBehaviour
             }
             else
             {
-                this.UnHighlightSlots(offsetSlot, this.selectedItem);
+                this.UnHighlightSlots(offsetSlot, selectedItem);
                 foreach (var s in parentSlots)
                 {
                     this.HighlightSlots(s, s.Item, Colors.Blue);
@@ -233,33 +265,41 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    private void InventorySlot_SlotClicked(InventorySlot slot)
+    protected void InventorySlot_SlotClicked(InventorySlot slot)
     {
+        if (colCount <= slot.slotPosition.x 
+            || rowCount <= slot.slotPosition.y
+            || (InventorySlot)inventorySlots.GetValue(slot.slotPosition.y, slot.slotPosition.x) != slot)
+        {
+            return;
+        }
+
         print(slot.slotPosition.x + "," + slot.slotPosition.y);
 
         if (!isItemSelected)
         {
             //Pick Up
-            if (slot.isOccupied && slot.Item is object)
+            if (slot.isOccupied && slot.Item != null)
             {
                 this.SelectItem(slot.Item);
-                this.SetSlotRaycastTartget(slot.Item.itemSize.x % 2 == 0, this.selectedItem.itemSize.y % 2 == 0);
-                this.HighlightSlots(slot.parentSlot,this.selectedItem,Colors.Blue);
+                this.SetSlotRaycastTartget(slot.Item.itemSize.x % 2 == 0, selectedItem.itemSize.y % 2 == 0);
+                this.HighlightSlots(slot.parentSlot, selectedItem, Colors.Blue);
                 //setup event for when an item is picked up (displaying physical item only i think)
                 this.UnsetOccupiedSlots(slot.parentSlot);
             }
         }
         else
         {
-            var offsetSlot = this.inventorySlots[slot.slotPosition.y - this.selectedItem.itemSize.y / 2, slot.slotPosition.x];
-            var parentSlots = this.ItemCountUnderItem(offsetSlot, this.selectedItem);
+            var offsetSlot = this.inventorySlots[slot.slotPosition.y - selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            var parentSlots = this.ItemCountUnderItem(offsetSlot, selectedItem);
 
             //Drop
             if (parentSlots.Count == 0)
             {
-                this.DropItem(offsetSlot, this.selectedItem);
-                this.selectedItem = null;
-                this.isItemSelected = false;
+                this.DropItem(offsetSlot, selectedItem);
+                selectedItem = null;
+                isItemSelected = false;
+                selectedFrom = null;
                 this.SetSlotRaycastTartget(false, false);
             }
             //Swap
@@ -267,9 +307,9 @@ public class Inventory : MonoBehaviour
             {
                 var tempItem = parentSlots[0].Item;
                 this.UnsetOccupiedSlots(parentSlots[0]);
-                this.DropItem(offsetSlot, this.selectedItem);
+                this.DropItem(offsetSlot, selectedItem);
                 this.SelectItem(tempItem);
-                this.SetSlotRaycastTartget(this.selectedItem.itemSize.x % 2 == 0, this.selectedItem.itemSize.y % 2 == 0);
+                this.SetSlotRaycastTartget(selectedItem.itemSize.x % 2 == 0, selectedItem.itemSize.y % 2 == 0);
             }
             //can't do anything
             else
@@ -278,106 +318,8 @@ public class Inventory : MonoBehaviour
             }
         }
     }
-
-    private void EquipmentSlot_SlotEntered(EquipmentSlot slot)
-    {
-        if (!this.isItemSelected)
-        {
-            if (slot.isOccupied)
-            {
-                this.HighlightEquipmentSlot(slot, Colors.Green);
-            }
-        }
-        else
-        {
-            if (this.CanEquipItem(this.selectedItem, slot))
-            {
-                this.HighlightEquipmentSlot(slot, Colors.Green);
-            }
-            else
-            {
-                this.HighlightEquipmentSlot(slot, Colors.Red);
-            }
-        }
-    }
-
-    private void EquipmentSlot_SlotExited(EquipmentSlot slot)
-    {
-        if (slot.isOccupied)
-        {
-            this.HighlightEquipmentSlot(slot, Colors.Blue);
-        }
-        else
-        {
-            this.HighlightEquipmentSlot(slot, Colors.Clear);
-        }
-    }
-
-    private void EquipmentSlot_SlotClicked(EquipmentSlot slot)
-    {
-        if (!this.isItemSelected)
-        {
-            if (slot.isOccupied)
-            {
-                //pickup the item
-                this.isItemSelected = true;
-                this.selectedItem = slot.Item;
-                this.HighlightEquipmentSlot(slot, Colors.Clear);
-                InventoryEvents.current.UnEquipItem(slot, slot.Item);
-                slot.Item = null;
-                slot.isOccupied = false;
-                this.SetSlotRaycastTartget(this.selectedItem.itemSize.x % 2 == 0, this.selectedItem.itemSize.y % 2 == 0);
-            }
-        }
-        else
-        {
-            //swap with selected Item
-            if (slot.isOccupied)
-            {
-                if (this.CanEquipItem(this.selectedItem, slot))
-                {
-                    var tempItem = slot.Item;
-                    //unequip
-                    InventoryEvents.current.UnEquipItem(slot, slot.Item);
-
-                    //equip
-                    slot.Item = this.selectedItem;
-                    InventoryEvents.current.EquipItem(slot, slot.Item);
-
-                    this.selectedItem = tempItem;
-                    this.HighlightEquipmentSlot(slot, Colors.Blue);
-                    this.SetSlotRaycastTartget(this.selectedItem.itemSize.x % 2 == 0, this.selectedItem.itemSize.y % 2 == 0);
-                }
-            }
-            //drop the selected item in the slot if the type matches
-            else
-            {
-                if (this.CanEquipItem(this.selectedItem, slot))
-                {
-                    slot.Item = this.selectedItem;
-                    slot.isOccupied = true;
-                    InventoryEvents.current.EquipItem(slot, this.selectedItem);
-                    this.HighlightEquipmentSlot(slot, Colors.Blue);
-                    this.SetSlotRaycastTartget(false, false);
-                    this.isItemSelected = false;
-                    this.selectedItem = null;
-                }
-            }
-        }
-    }
-
-    private void HighlightEquipmentSlot(EquipmentSlot slot, Color color)
-    {
-        slot.GetComponent<Image>().color = color;
-    }
-
-    private bool CanEquipItem(BaseItem selectedItem, EquipmentSlot slot)
-    {
-        return selectedItem.ItemType == slot.SlotType;
-    }
-
-
-    private List<InventorySlot> ItemCountUnderItem(InventorySlot slot, BaseItem item)
+    
+    protected List<InventorySlot> ItemCountUnderItem(InventorySlot slot, BaseItem item)
     {
         var parentSlots = new List<InventorySlot>(0);
         for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
@@ -395,14 +337,15 @@ public class Inventory : MonoBehaviour
         return parentSlots;
     }
 
-    private void SelectItem(BaseItem item)
+    protected void SelectItem(BaseItem item)
     {
-        this.selectedItem = item;
-        this.isItemSelected = true;        
+        selectedItem = item;
+        isItemSelected = true;
+        selectedFrom = this;
         InventoryEvents.current.SelectItem(item);
     }
 
-    private void DropItem(InventorySlot slot, BaseItem item)
+    protected void DropItem(InventorySlot slot, BaseItem item)
     {
         for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
@@ -418,7 +361,7 @@ public class Inventory : MonoBehaviour
         InventoryEvents.current.DropItem(item, slot);
     }
 
-    private void UnsetOccupiedSlots(InventorySlot slot)
+    protected void UnsetOccupiedSlots(InventorySlot slot)
     {
         foreach (var s in slot.childrenSlots)
         {
@@ -430,32 +373,36 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    private void SetSlotRaycastTartget(bool isItemSizeXEven, bool isItemSizeYEven)
+    protected void SetSlotRaycastTartget(bool isItemSizeXEven, bool isItemSizeYEven)
     {
-        foreach (var slot in this.inventorySlots)
+        foreach (var inventory in GameObject.FindObjectsOfType<Inventory>())
         {
-            if (isItemSizeXEven)
+            foreach (var slot in inventory.inventorySlots)
             {
-                if (isItemSizeYEven)
+                if (isItemSizeXEven)
                 {
-                    slot.GetComponent<Image>().raycastPadding = new Vector4(24, 24, -24, -24);
+                    if (isItemSizeYEven)
+                    {
+                        slot.GetComponent<Image>().raycastPadding = new Vector4(24, 24, -24, -24);
+                    }
+                    else
+                    {
+                        slot.GetComponent<Image>().raycastPadding = new Vector4(24, 0, -24, 0);
+                    }
                 }
                 else
                 {
-                    slot.GetComponent<Image>().raycastPadding = new Vector4(24, 0, -24, 0);
-                }
-            }
-            else
-            {
-                if (isItemSizeYEven)
-                {
-                    slot.GetComponent<Image>().raycastPadding = new Vector4(0, 24, 0, -24);
-                }
-                else
-                {
-                    slot.GetComponent<Image>().raycastPadding = new Vector4(0, 0, 0, 0);
+                    if (isItemSizeYEven)
+                    {
+                        slot.GetComponent<Image>().raycastPadding = new Vector4(0, 24, 0, -24);
+                    }
+                    else
+                    {
+                        slot.GetComponent<Image>().raycastPadding = new Vector4(0, 0, 0, 0);
+                    }
                 }
             }
         }
+
     }
 }

@@ -9,10 +9,10 @@ public class InventoryController : MonoBehaviour
     
     void Start()
     {
-        AddItemToInventory();
+        
     }
 
-    private void AddItemToInventory()
+    public void AddItemsToInventory()
     {
         var item = new TempItem
         {
@@ -79,13 +79,12 @@ public class InventoryController : MonoBehaviour
             imagePath = "Item Icons\\Weapon\\Sword\\Rusted Blade"
         };
 
-        var slot = this.PlayerInventory.GetFirstAvailableSlotForItem(item);
-        this.PlayerInventory.AddItem(slot.slotPosition, item);
-        this.PlayerInventory.AddItem(new Vector2Int(2,0), item2);
-        this.PlayerInventory.AddItem(new Vector2Int(3,0), item3);
-        this.PlayerInventory.AddItem(new Vector2Int(4,0), item4);
-        this.PlayerInventory.AddItem(new Vector2Int(6,0), item5);
-        this.PlayerInventory.AddItem(new Vector2Int(8,0), item6);
+        this.PlayerInventory.AddItem(this.PlayerInventory.GetFirstAvailableSlotForItem(item).slotPosition, item);
+        this.PlayerInventory.AddItem(this.PlayerInventory.GetFirstAvailableSlotForItem(item).slotPosition, item2);
+        this.PlayerInventory.AddItem(this.PlayerInventory.GetFirstAvailableSlotForItem(item).slotPosition, item3);
+        this.PlayerInventory.AddItem(this.PlayerInventory.GetFirstAvailableSlotForItem(item).slotPosition, item4);
+        this.PlayerInventory.AddItem(this.PlayerInventory.GetFirstAvailableSlotForItem(item).slotPosition, item5);
+        this.PlayerInventory.AddItem(this.PlayerInventory.GetFirstAvailableSlotForItem(item).slotPosition, item6);
 
     }
 }
