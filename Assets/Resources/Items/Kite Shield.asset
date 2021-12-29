@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9b8a5f4e15e3fb44891f962d20e5046, type: 3}
+  m_Name: Kite Shield
+  m_EditorClassIdentifier: 
+  itemName: Kite Shield
+  itemSize: {x: 2, y: 3}
+  image: {fileID: 21300000, guid: 24895c22b14a71d49b15738d1c39c9c0, type: 3}
+  dropSound: {fileID: 8300000, guid: 058241be7939cb548ab301c53dc0f7b0, type: 3}
+  requiredLevel: 1
+  itemType: 3
+  defence: 23
+  blockChance: 35

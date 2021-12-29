@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1722e9e2ccd2c94c8e8e5094ca39db2, type: 3}
+  m_Name: Jade Amulet
+  m_EditorClassIdentifier: 
+  itemName: Jade Amulet
+  itemSize: {x: 1, y: 1}
+  image: {fileID: 21300000, guid: 490661acb5d40f8478cc29ef90d20b96, type: 3}
+  dropSound: {fileID: 8300000, guid: 29ed59f8fe138d64a8678f434430b6fa, type: 3}
+  requiredLevel: 1
+  itemType: 7

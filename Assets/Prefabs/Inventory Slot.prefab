@@ -90,10 +90,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1302d691016ff574d9c78240072a7c8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  text: {fileID: 9142164869281195791}
-  evenItemSlotTarget: {fileID: 0}
-  slotPosition: {x: 0, y: 0}
   isOccupied: 0
+  text: {fileID: 9142164869281195791}
+  slotPosition: {x: 0, y: 0}
 --- !u!114 &-9001617781195374043
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -123,7 +122,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6002466728954779465
 RectTransform:
   m_ObjectHideFlags: 0
