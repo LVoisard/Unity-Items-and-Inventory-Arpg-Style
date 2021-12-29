@@ -44,6 +44,14 @@ public class InventoryController : MonoBehaviour
 
     public void AddItem(Item item)
     {
-        this.PlayerInventory.AddItem(this.PlayerInventory.GetFirstAvailableSlotForItem(item).slotPosition, item);
+        var slot = this.PlayerInventory.GetFirstAvailableSlotForItem(item);
+        if(slot != null)
+        {            
+            this.PlayerInventory.AddItem(slot.slotPosition, item);
+        }
+        else
+        {
+            print("No more space in inventory");
+        }
     }
 }

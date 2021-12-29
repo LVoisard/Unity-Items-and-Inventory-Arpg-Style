@@ -77,7 +77,7 @@ public class Inventory : MonoBehaviour
             }
         }
 
-        GameObject inventoryItem = Instantiate(this.inventoryItemPrefab, this.transform);        
+        GameObject inventoryItem = Instantiate(this.inventoryItemPrefab, this.transform);
         inventoryItem.GetComponent<InventoryItem>().SetInventoryItem(item, slot, itemTooltip);
 
         this.PlaceItem(item, slot.slotPosition);
@@ -93,22 +93,22 @@ public class Inventory : MonoBehaviour
         this.Items.Remove(item);
     }
 
-    protected void ItemSelectedFromInventory(BaseItem item) 
+    protected void ItemSelectedFromInventory(BaseItem item)
     {
-        if(this.Items.Any(x => x.Key == item))
+        if (this.Items.Any(x => x.Key == item))
             RemoveItem(item);
     }
 
-    protected void ItemDroppedInInventory(BaseItem item, InventorySlot slot) 
+    protected void ItemDroppedInInventory(BaseItem item, InventorySlot slot)
     {
-        if (colCount <= slot.slotPosition.x 
+        if (colCount <= slot.slotPosition.x
             || rowCount <= slot.slotPosition.y
             || (InventorySlot)inventorySlots.GetValue(slot.slotPosition.y, slot.slotPosition.x) != slot)
         {
             return;
-        }        
-        
-        PlaceItem(item,slot.slotPosition);
+        }
+
+        PlaceItem(item, slot.slotPosition);
     }
 
     public InventorySlot GetFirstAvailableSlotForItem(BaseItem item)
@@ -117,7 +117,7 @@ public class Inventory : MonoBehaviour
         {
             for (int x = 0; x < colCount; x++)
             {
-                if(x < 0 || y < 0 || x >= colCount || y >= rowCount)
+                if (x < 0 || y < 0 || x >= colCount || y >= rowCount)
                 {
                     continue;
                 }
@@ -187,14 +187,14 @@ public class Inventory : MonoBehaviour
         for (int y = slot.slotPosition.y; y < slot.slotPosition.y + item.itemSize.y; y++)
         {
             for (int x = slot.slotPosition.x; x < slot.slotPosition.x + item.itemSize.x; x++)
-            {                
-                if(x < 0 || y < 0 || x >= colCount || y >= rowCount)
+            {
+                if (x < 0 || y < 0 || x >= colCount || y >= rowCount)
                 {
                     return true;
                 }
                 if (inventorySlots[y, x].isOccupied)
                 {
-                    print("occupied at: " + inventorySlots[y,x].name);
+                    print("occupied at: " + inventorySlots[y, x].name);
                     return true;
                 }
             }
@@ -204,7 +204,7 @@ public class Inventory : MonoBehaviour
 
     protected void InventorySlot_SlotEntered(InventorySlot slot)
     {
-        if (colCount <= slot.slotPosition.x 
+        if (colCount <= slot.slotPosition.x
             || rowCount <= slot.slotPosition.y
             || (InventorySlot)inventorySlots.GetValue(slot.slotPosition.y, slot.slotPosition.x) != slot)
         {
@@ -227,7 +227,20 @@ public class Inventory : MonoBehaviour
         }
         else
         {
-            var offsetSlot = this.inventorySlots[slot.slotPosition.y - selectedItem.itemSize.y / 2, slot.slotPosition.x];
+
+            InventorySlot offsetSlot;
+            if (0 > slot.slotPosition.y - selectedItem.itemSize.y / 2)
+            {
+                offsetSlot = this.inventorySlots[0, slot.slotPosition.x];
+            }
+            else if (rowCount < slot.slotPosition.y - selectedItem.itemSize.y / 2)
+            {
+                offsetSlot = this.inventorySlots[rowCount, slot.slotPosition.x];
+            }
+            else
+            {
+                offsetSlot = this.inventorySlots[slot.slotPosition.y - selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            }
             var parentSlots = this.ItemCountUnderItem(offsetSlot, selectedItem);
             if (parentSlots == null)
             {
@@ -250,7 +263,7 @@ public class Inventory : MonoBehaviour
 
     protected void InventorySlot_SlotExited(InventorySlot slot)
     {
-        if (colCount <= slot.slotPosition.x 
+        if (colCount <= slot.slotPosition.x
             || rowCount <= slot.slotPosition.y
             || (InventorySlot)inventorySlots.GetValue(slot.slotPosition.y, slot.slotPosition.x) != slot)
         {
@@ -276,7 +289,20 @@ public class Inventory : MonoBehaviour
         }
         else
         {
-            var offsetSlot = this.inventorySlots[slot.slotPosition.y - selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            InventorySlot offsetSlot;
+            if (0 > slot.slotPosition.y - selectedItem.itemSize.y / 2)
+            {
+                offsetSlot = this.inventorySlots[0, slot.slotPosition.x];
+            }
+            else if (rowCount < slot.slotPosition.y - selectedItem.itemSize.y / 2)
+            {
+                offsetSlot = this.inventorySlots[rowCount, slot.slotPosition.x];
+            }
+            else
+            {
+                offsetSlot = this.inventorySlots[slot.slotPosition.y - selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            }
+
             var parentSlots = this.ItemCountUnderItem(offsetSlot, selectedItem);
             if (parentSlots == null)
             {
@@ -298,18 +324,19 @@ public class Inventory : MonoBehaviour
                     this.HighlightSlots(s, s.Item, Colors.Blue);
                 }
             }
+
         }
     }
 
     protected void InventorySlot_SlotClicked(InventorySlot slot)
     {
-        if (colCount <= slot.slotPosition.x 
+        if (colCount <= slot.slotPosition.x
             || rowCount <= slot.slotPosition.y
             || (InventorySlot)inventorySlots.GetValue(slot.slotPosition.y, slot.slotPosition.x) != slot)
         {
             return;
         }
-        
+
         if (!isItemSelected)
         {
             //Pick Up
@@ -325,11 +352,27 @@ public class Inventory : MonoBehaviour
         }
         else
         {
-            var offsetSlot = this.inventorySlots[slot.slotPosition.y - selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            InventorySlot offsetSlot;
+            if (0 > slot.slotPosition.y - selectedItem.itemSize.y / 2)
+            {
+                offsetSlot = this.inventorySlots[0, slot.slotPosition.x];
+            }
+            else if (rowCount < slot.slotPosition.y - selectedItem.itemSize.y / 2)
+            {
+                offsetSlot = this.inventorySlots[rowCount, slot.slotPosition.x];
+            }
+            else
+            {
+                offsetSlot = this.inventorySlots[slot.slotPosition.y - selectedItem.itemSize.y / 2, slot.slotPosition.x];
+            }
             var parentSlots = this.ItemCountUnderItem(offsetSlot, selectedItem);
 
             //Drop
-            if (parentSlots.Count == 0)
+            if (parentSlots == null)
+            {
+                Debug.LogWarning("Error: Index out of range");
+            }
+            else if (parentSlots.Count == 0)
             {
                 this.DropItem(offsetSlot, selectedItem);
                 selectedItem = null;
@@ -354,7 +397,7 @@ public class Inventory : MonoBehaviour
             }
         }
     }
-    
+
     protected List<InventorySlot> ItemCountUnderItem(InventorySlot slot, BaseItem item)
     {
         var parentSlots = new List<InventorySlot>(0);
